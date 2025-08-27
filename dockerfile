@@ -1,32 +1,42 @@
-# Imagen base
+# Etapa 1: construir dependencias
+FROM composer:2 AS vendor
+
+WORKDIR /app
+COPY composer.json composer.lock ./
+RUN composer install --no-dev --optimize-autoloader --no-interaction
+
+# Etapa 2: construir frontend (si usas Vite)
+FROM node:18 AS frontend
+WORKDIR /app
+COPY package.json package-lock.json ./
+RUN npm install
+COPY . .
+RUN npm run build
+
+# Etapa 3: imagen final
 FROM php:8.2-fpm
 
-# Instalar dependencias del sistema
+# Instalar extensiones necesarias para Laravel
 RUN apt-get update && apt-get install -y \
-    libzip-dev \
-    zip \
-    unzip \
-    git \
-    curl \
-    libonig-dev \
-    libpq-dev \
-    && docker-php-ext-install pdo pdo_mysql mbstring zip bcmath
+    unzip git curl libpng-dev libonig-dev libxml2-dev zip \
+    && docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd
 
-# Instalar Composer
-COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
+# Instalar Nginx y Supervisor
+RUN apt-get install -y nginx supervisor
 
-# Copiar proyecto
-WORKDIR /var/www
+WORKDIR /var/www/html
+
+# Copiar vendor y build
+COPY --from=vendor /app/vendor ./vendor
+COPY --from=frontend /app/public/build ./public/build
 COPY . .
 
-# Instalar dependencias PHP
-RUN composer install --no-dev --optimize-autoloader
+# Configurar Nginx
+COPY ./docker/nginx.conf /etc/nginx/sites-available/default
 
-# Permisos
-RUN chown -R www-data:www-data /var/www
+# Configurar Supervisor (para correr PHP-FPM y Nginx juntos)
+COPY ./docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
-# Exponer puerto 8000
-EXPOSE 8000
+EXPOSE 80
 
-# Comando para iniciar Laravel
-CMD ["php", "artisan", "serve", "--host=0.0.0.0", "--port=8000"]
+CMD ["/usr/bin/supervisord", "-n", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
