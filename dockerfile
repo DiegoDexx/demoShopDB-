@@ -22,7 +22,6 @@ WORKDIR /var/www/html
 
 # Copiar vendor y build
 COPY --from=vendor /app/vendor ./vendor
-COPY --from=frontend /app/public/build ./public/build
 COPY . .
 
 # Configurar Nginx
