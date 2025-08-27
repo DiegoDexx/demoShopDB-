@@ -1,33 +1,30 @@
-# Etapa 1: construir dependencias
+# Etapa 1: dependencias
 FROM composer:2.6 AS vendor
-
 WORKDIR /app
 COPY composer.json composer.lock ./
-RUN composer install --no-dev --optimize-autoloader --no-interaction
+RUN composer install --no-dev --optimize-autoloader --no-interaction --no-scripts
 
-
-
-# Etapa 3: imagen final
+# Etapa final
 FROM php:8.2-fpm
 
-# Instalar extensiones necesarias para Laravel
 RUN apt-get update && apt-get install -y \
     unzip git curl libpng-dev libonig-dev libxml2-dev zip \
-    && docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd
-
-# Instalar Nginx y Supervisor
-RUN apt-get install -y nginx supervisor
+    && docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd \
+    && apt-get install -y nginx supervisor
 
 WORKDIR /var/www/html
 
-# Copiar vendor y build
+# Copiar vendor
 COPY --from=vendor /app/vendor ./vendor
 COPY . .
 
-# Configurar Nginx
+# Asegurar cache
+RUN mkdir -p bootstrap/cache && chmod -R 775 bootstrap/cache
+
+# Config Nginx
 COPY ./docker/nginx.conf /etc/nginx/sites-available/default
 
-# Configurar Supervisor (para correr PHP-FPM y Nginx juntos)
+# Config Supervisor
 COPY ./docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
 EXPOSE 80
