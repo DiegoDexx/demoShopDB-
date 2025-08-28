@@ -1,4 +1,4 @@
-# Etapa 1: Dependencias con Composer
+# Etapa 1: Dependencias PHP
 FROM composer:2.6 AS vendor
 WORKDIR /app
 COPY composer.json composer.lock ./
@@ -7,7 +7,7 @@ RUN composer install --no-dev --optimize-autoloader --no-interaction --no-script
 # Etapa 2: Imagen final PHP-FPM
 FROM php:8.2-fpm
 
-# Instalar extensiones necesarias + nginx y supervisor
+# Instalar extensiones necesarias + Nginx y Supervisor
 RUN apt-get update && apt-get install -y \
     unzip git curl libpng-dev libonig-dev libxml2-dev zip \
     && docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd \
@@ -18,15 +18,15 @@ WORKDIR /var/www/html
 # Copiar dependencias de Composer
 COPY --from=vendor /app/vendor ./vendor
 
-# Copiar todo el código
+# Copiar código de Laravel
 COPY . .
 
-# 🔹 Crear directorios y ajustar permisos
+# 🔹 Ajustar permisos
 RUN mkdir -p bootstrap/cache storage \
     && chown -R www-data:www-data storage bootstrap/cache \
     && chmod -R 775 storage bootstrap/cache
 
-# Copiar configuraciones de nginx y supervisor
+# Copiar configuraciones
 COPY ./docker/nginx.conf /etc/nginx/sites-available/default
 COPY ./docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
