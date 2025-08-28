@@ -23,7 +23,7 @@ class CorsMiddleware
             'http://localhost:5173',
             'http://localhost:5174',
             //enlaces para render
-            'https://demoshopdb.onrender.com',
+           
         ];
 
         // Obtén el origen de la solicitud

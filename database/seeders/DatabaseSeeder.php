@@ -17,10 +17,10 @@ class DatabaseSeeder extends Seeder
         $this->call([
           
             ProductSeeder::class,
-            //  RoleSeeder::class, 
+            RoleSeeder::class, 
             
-            // UserSeeder::class,
-            //CartSeeder::class,
+            UserSeeder::class,
+            CartSeeder::class,
 
             //asigabnr roles a los usuarios
 
