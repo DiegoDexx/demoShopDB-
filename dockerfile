@@ -1,10 +1,8 @@
-# Etapa 1: dependencias
 FROM composer:2.6 AS vendor
 WORKDIR /app
 COPY composer.json composer.lock ./
 RUN composer install --no-dev --optimize-autoloader --no-interaction --no-scripts
 
-# Etapa final
 FROM php:8.2-fpm
 
 RUN apt-get update && apt-get install -y \
@@ -18,13 +16,12 @@ WORKDIR /var/www/html
 COPY --from=vendor /app/vendor ./vendor
 COPY . .
 
-# Asegurar cache
-RUN mkdir -p bootstrap/cache && chmod -R 775 bootstrap/cache
+# 🔹 Fix permisos
+RUN mkdir -p bootstrap/cache storage \
+    && chown -R www-data:www-data storage bootstrap/cache \
+    && chmod -R 775 storage bootstrap/cache
 
-# Config Nginx
 COPY ./docker/nginx.conf /etc/nginx/sites-available/default
-
-# Config Supervisor
 COPY ./docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
 EXPOSE 80
