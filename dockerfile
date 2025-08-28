@@ -1,4 +1,4 @@
-# Etapa 1: Dependencias PHP
+# Etapa 1: Dependencias PHP con Composer
 FROM composer:2.6 AS vendor
 WORKDIR /app
 COPY composer.json composer.lock ./
@@ -18,15 +18,15 @@ WORKDIR /var/www/html
 # Copiar dependencias de Composer
 COPY --from=vendor /app/vendor ./vendor
 
-# Copiar código de Laravel
+# Copiar todo el código de Laravel
 COPY . .
 
-# 🔹 Ajustar permisos
+# 🔹 Crear directorios y ajustar permisos
 RUN mkdir -p bootstrap/cache storage \
     && chown -R www-data:www-data storage bootstrap/cache \
     && chmod -R 775 storage bootstrap/cache
 
-# Copiar configuraciones
+# Copiar configuraciones de Nginx y Supervisor
 COPY ./docker/nginx.conf /etc/nginx/sites-available/default
 COPY ./docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
@@ -34,7 +34,7 @@ COPY ./docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 COPY ./docker/entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
-EXPOSE 80
+EXPOSE 8080
 
 # Ejecutar entrypoint al iniciar el contenedor
 CMD ["/entrypoint.sh"]
