@@ -22,8 +22,8 @@ class CorsMiddleware
            
             'http://localhost:5173',
             'http://localhost:5174',
-            //enlaces para render
-           
+            //enlaces para netlify
+            'https://68b086089e935e0008b42f7d--oryonshoppingdemo.netlify.app/'
         ];
 
         // Obtén el origen de la solicitud
